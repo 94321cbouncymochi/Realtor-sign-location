@@ -82,12 +82,8 @@ function goToMyLocation() {
 
       map.setView([lat, lng], 17);
 
-      if (userMarker) map.removeLayer(userMarker);
-
-      userMarker = L.marker([lat, lng])
-        .addTo(map)
-        .bindPopup("📍 You are here")
-        .openPopup();
+      // ❌ removed user marker completely
+      console.log("Location centered:", lat, lng);
     },
     (err) => {
       alert("GPS error: " + err.message);
