@@ -5,24 +5,20 @@
   <title>Realtor Map</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <style>
     body { margin: 0; font-family: Arial; }
-    #bar {
-      padding: 10px;
-      background: #111827;
-    }
+    #bar { padding: 10px; background: #111827; }
     button {
       padding: 10px;
-      margin-right: 10px;
+      margin-right: 8px;
       border: 0;
       border-radius: 8px;
       background: #22c55e;
       color: white;
-      font-weight: bold;
       cursor: pointer;
+      font-weight: bold;
     }
     #map { height: calc(100vh - 50px); }
   </style>
@@ -82,50 +78,57 @@ function load() {
     .then(r => r.json())
     .then(data => {
 
-      console.log("DATA RECEIVED:", data);
-
-      // clear old markers safely
       markers.forEach(m => map.removeLayer(m));
       markers = [];
 
-      if (!Array.isArray(data)) {
-        console.error("NOT ARRAY:", data);
-        return;
-      }
+      data.forEach(p => {
 
-      let points = [];
-
-      data.forEach((p, i) => {
-
-        console.log("RAW POINT:", p);
-
-        const lat = parseFloat(p.lat);
-        const lng = parseFloat(p.lng);
-
-        console.log("PARSED:", lat, lng);
-
-        if (isNaN(lat) || isNaN(lng)) {
-          console.warn("SKIPPED BAD POINT:", p);
-          return;
-        }
+        const lat = Number(p.lat);
+        const lng = Number(p.lng);
 
         const marker = L.marker([lat, lng]).addTo(map);
 
-        marker.bindPopup("Saved Location");
+        marker.bindPopup(`
+          <b>📍 Saved Location</b><br><br>
+
+          <button onclick="openGPS(${lat},${lng})"
+            style="padding:6px;margin:4px;background:#22c55e;color:white;border:none;border-radius:6px;cursor:pointer;">
+            🧭 Open GPS
+          </button>
+
+          <br>
+
+          <button onclick="deleteMarker(${lat},${lng})"
+            style="padding:6px;margin:4px;background:#ef4444;color:white;border:none;border-radius:6px;cursor:pointer;">
+            🗑️ Delete
+          </button>
+        `);
 
         markers.push(marker);
-        points.push([lat, lng]);
       });
 
-      console.log("TOTAL MARKERS:", markers.length);
+    });
+}
 
-      // 🔥 FORCE VIEW TO MARKERS (CRITICAL)
-      if (points.length > 0) {
-        map.fitBounds(points, { padding: [50, 50] });
-      }
+/* ================= GPS OPEN ================= */
+function openGPS(lat, lng) {
+  window.open(
+    `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+    "_blank"
+  );
+}
 
+/* ================= DELETE ================= */
+function deleteMarker(lat, lng) {
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "delete",
+      lat,
+      lng
     })
-    .catch(err => console.error("FETCH ERROR:", err));
+  }).then(() => load());
 }
 
 init();
