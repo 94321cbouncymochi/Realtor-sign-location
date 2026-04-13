@@ -134,26 +134,39 @@ function saveMyLocation() {
    📦 LOAD MARKERS (FIXED)
 ========================= */
 function loadMarkers() {
+  console.log("LOADING MARKERS...");
+
   fetch(API_URL)
     .then(res => res.json())
     .then(data => {
 
-      console.log("DATA:", data);
+      console.log("RAW API DATA:", data);
 
+      // clear old markers
       markers.forEach(m => map.removeLayer(m));
       markers = [];
 
-      data.forEach((item) => {
+      if (!Array.isArray(data)) {
+        console.error("DATA NOT ARRAY:", data);
+        return;
+      }
+
+      data.forEach((item, i) => {
 
         const lat = Number(item.lat);
         const lng = Number(item.lng);
 
-        if (isNaN(lat) || isNaN(lng)) return;
+        console.log(`Marker ${i}:`, lat, lng);
+
+        if (isNaN(lat) || isNaN(lng)) {
+          console.warn("SKIPPING BAD DATA:", item);
+          return;
+        }
 
         const marker = L.marker([lat, lng]).addTo(map);
 
         marker.bindPopup(`
-          <b>Saved Location</b><br><br>
+          <b>Saved Location</b><br>
           <button onclick="openDirections(${lat}, ${lng})">
             🧭 Get Directions
           </button>
@@ -162,9 +175,11 @@ function loadMarkers() {
         markers.push(marker);
       });
 
-      console.log("Markers loaded:", markers.length);
+      console.log("TOTAL MARKERS:", markers.length);
     })
-    .catch(err => console.log("LOAD ERROR:", err));
+    .catch(err => {
+      console.error("LOAD FAILED:", err);
+    });
 }
 
 /* =========================
