@@ -103,15 +103,26 @@ function saveMyLocation() {
 
       fetch(API_URL, {
         method: "POST",
+        headers: {
+          "Content-Type": "text/plain"
+        },
         body: JSON.stringify({ lat, lng })
       })
       .then(res => res.text())
       .then(txt => {
-        console.log("SAVE:", txt);
-        alert("Saved!");
-        loadMarkers();
+        console.log("SAVE RESPONSE:", txt);
+
+        if (txt.includes("ERROR")) {
+          alert("Save failed (Apps Script error)");
+        } else {
+          alert("Saved!");
+          loadMarkers();
+        }
       })
-      .catch(err => alert("Save failed"));
+      .catch(err => {
+        console.error(err);
+        alert("Save failed (network issue)");
+      });
     },
     (err) => {
       alert("GPS error: " + err.message);
