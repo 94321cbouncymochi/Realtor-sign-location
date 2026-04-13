@@ -1,163 +1,108 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Realtor Map Tracker</title>
+  <meta charset="utf-8" />
+  <title>Realtor Map</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-    }
-
-    #topbar {
-      display: flex;
-      gap: 10px;
+    body { margin: 0; font-family: Arial; }
+    #bar {
       padding: 10px;
-      background: #1e293b;
+      background: #111827;
     }
-
     button {
       padding: 10px;
-      border: none;
+      margin-right: 10px;
+      border: 0;
       border-radius: 8px;
-      cursor: pointer;
       background: #22c55e;
       color: white;
       font-weight: bold;
+      cursor: pointer;
     }
-
-    #map {
-      height: calc(100vh - 60px);
-    }
+    #map { height: calc(100vh - 50px); }
   </style>
 </head>
 
 <body>
 
-<div id="topbar">
-  <button onclick="goToMyLocation()">📍 My Location</button>
-  <button onclick="saveMyLocation()">💾 Save Location</button>
+<div id="bar">
+  <button onclick="go()">📍 My Location</button>
+  <button onclick="save()">💾 Save Location</button>
 </div>
 
 <div id="map"></div>
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyH72cVKuncJmAxC5xTWN8EHoS1_31a9RUqRcKpy0bhGFhKYId_6DWJaBplXTDgGGGw/exec";
+const API_URL = "YOUR_GOOGLE_SCRIPT_EXEC_URL_HERE";
 
 let map;
 let markers = [];
-let userMarker = null;
 
-/* =========================
-   🗺️ INIT MAP
-========================= */
-function initMap() {
+/* ================= MAP ================= */
+function init() {
   map = L.map('map').setView([47.4, -122.2], 12);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap'
   }).addTo(map);
 
-  loadMarkers(); // keep this if markers are still needed
+  load();
 }
 
-/* =========================
-   📍 GPS LOCATION
-========================= */
-function goToMyLocation() {
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-
-      map.setView([lat, lng], 17);
-
-      // ❌ removed user marker completely
-      console.log("Location centered:", lat, lng);
-    },
-    (err) => {
-      alert("GPS error: " + err.message);
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 15000
-    }
-  );
+/* ================= GPS ================= */
+function go() {
+  navigator.geolocation.getCurrentPosition(pos => {
+    map.setView([pos.coords.latitude, pos.coords.longitude], 17);
+  });
 }
 
-/* =========================
-   💾 SAVE LOCATION
-========================= */
-function saveMyLocation() {
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-
-      fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ lat, lng })
+/* ================= SAVE ================= */
+function save() {
+  navigator.geolocation.getCurrentPosition(pos => {
+    fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude
       })
-      .then(res => res.text())
-      .then(txt => {
-        console.log("SAVE RESPONSE:", txt);
-
-        if (!txt.includes("OK")) {
-          alert("Save failed: " + txt);
-        } else {
-          alert("Saved!");
-          loadMarkers();
-        }
-      })
-      .catch(err => {
-        console.error("NETWORK ERROR:", err);
-        alert("Save failed (network blocked)");
-      });
-    },
-    (err) => alert("GPS error: " + err.message)
-  );
+    }).then(() => load());
+  });
 }
 
-/* =========================
-   📦 LOAD MARKERS (FIXED)
-========================= */
-function loadMarkers() {
-  console.log("🔥 LOAD MARKERS START");
-
+/* ================= LOAD ================= */
+function load() {
   fetch(API_URL)
-    .then(res => res.json())
+    .then(r => r.json())
     .then(data => {
 
-      console.log("📦 RAW API RESPONSE:", data);
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
 
-      alert("Markers received: " + data.length);
+      data.forEach(p => {
+        const m = L.marker([p.lat, p.lng]).addTo(map);
 
-    })
-    .catch(err => {
-      console.error("💥 FETCH FAILED:", err);
-      alert("Fetch failed");
+        m.bindPopup(`
+          <b>Saved Location</b><br>
+          <a target="_blank"
+             href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}">
+             Directions
+          </a>
+        `);
+
+        markers.push(m);
+      });
+
     });
 }
 
-/* =========================
-   🧭 DIRECTIONS
-========================= */
-function openDirections(lat, lng) {
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  window.open(url, "_blank");
-}
-
-/* =========================
-   🚀 START
-========================= */
-window.onload = initMap;
+init();
 
 </script>
 
