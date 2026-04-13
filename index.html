@@ -134,32 +134,34 @@ function saveMyLocation() {
    📦 LOAD MARKERS (FIXED)
 ========================= */
 function loadMarkers() {
-  console.log("LOADING MARKERS...");
+  console.log("🔥 loadMarkers CALLED");
 
   fetch(API_URL)
     .then(res => res.json())
     .then(data => {
 
-      console.log("RAW API DATA:", data);
+      console.log("📦 RAW RESPONSE:", data);
+      console.log("📦 TYPE:", typeof data);
+      console.log("📦 IS ARRAY:", Array.isArray(data));
+      console.log("📦 LENGTH:", data?.length);
 
-      // clear old markers
       markers.forEach(m => map.removeLayer(m));
       markers = [];
 
-      if (!Array.isArray(data)) {
-        console.error("DATA NOT ARRAY:", data);
+      if (!data || data.length === 0) {
+        console.warn("⚠️ NO DATA FROM SHEET");
         return;
       }
 
       data.forEach((item, i) => {
 
+        console.log("➡️ ITEM:", item);
+
         const lat = Number(item.lat);
         const lng = Number(item.lng);
 
-        console.log(`Marker ${i}:`, lat, lng);
-
         if (isNaN(lat) || isNaN(lng)) {
-          console.warn("SKIPPING BAD DATA:", item);
+          console.warn("❌ BAD ITEM:", item);
           return;
         }
 
@@ -175,10 +177,10 @@ function loadMarkers() {
         markers.push(marker);
       });
 
-      console.log("TOTAL MARKERS:", markers.length);
+      console.log("✅ FINAL MARKER COUNT:", markers.length);
     })
     .catch(err => {
-      console.error("LOAD FAILED:", err);
+      console.error("💥 FETCH FAILED:", err);
     });
 }
 
