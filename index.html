@@ -7,7 +7,10 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <style>
-    body { margin: 0; font-family: Arial; }
+    body {
+      margin: 0;
+      font-family: Arial;
+    }
 
     #topbar {
       display: flex;
@@ -59,9 +62,7 @@ function initMap() {
     attribution: '&copy; OpenStreetMap'
   }).addTo(map);
 
-  loadMarkers();
-
-  setTimeout(() => map.invalidateSize(), 300);
+  setTimeout(loadMarkers, 500);
 }
 
 /* =========================
@@ -84,6 +85,10 @@ function goToMyLocation() {
     },
     (err) => {
       alert("GPS error: " + err.message);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000
     }
   );
 }
@@ -101,22 +106,29 @@ function saveMyLocation() {
         method: "POST",
         body: JSON.stringify({ lat, lng })
       })
-      .then(() => {
+      .then(res => res.text())
+      .then(txt => {
+        console.log("SAVE:", txt);
         alert("Saved!");
         loadMarkers();
-      });
+      })
+      .catch(err => alert("Save failed"));
     },
-    (err) => alert(err.message)
+    (err) => {
+      alert("GPS error: " + err.message);
+    }
   );
 }
 
 /* =========================
-   📦 LOAD MARKERS
+   📦 LOAD MARKERS (FIXED)
 ========================= */
 function loadMarkers() {
   fetch(API_URL)
     .then(res => res.json())
     .then(data => {
+
+      console.log("DATA:", data);
 
       markers.forEach(m => map.removeLayer(m));
       markers = [];
@@ -126,7 +138,7 @@ function loadMarkers() {
         const lat = Number(item.lat);
         const lng = Number(item.lng);
 
-        if (!lat || !lng) return;
+        if (isNaN(lat) || isNaN(lng)) return;
 
         const marker = L.marker([lat, lng]).addTo(map);
 
@@ -139,12 +151,14 @@ function loadMarkers() {
 
         markers.push(marker);
       });
+
+      console.log("Markers loaded:", markers.length);
     })
     .catch(err => console.log("LOAD ERROR:", err));
 }
 
 /* =========================
-   🧭 REAL DIRECTIONS MODE
+   🧭 DIRECTIONS
 ========================= */
 function openDirections(lat, lng) {
   const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
