@@ -82,22 +82,41 @@ function goToMyLocation() {
     (pos) => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
+      const acc = pos.coords.accuracy;
+
+      console.log("GPS:", lat, lng, "Accuracy:", acc);
+
+      // 🚨 FILTER BAD GPS DATA
+      if (!lat || !lng || lat === 0 || lng === 0) {
+        alert("Bad GPS signal. Try outside or disable VPN.");
+        return;
+      }
 
       map.setView([lat, lng], 17);
 
-      if (userMarker) map.removeLayer(userMarker);
+      // remove old marker
+      if (window.userMarker) {
+        map.removeLayer(window.userMarker);
+      }
 
-      userMarker = L.circleMarker([lat, lng], {
-        radius: 8
-      }).addTo(map);
+      window.userMarker = L.marker([lat, lng])
+        .addTo(map)
+        .bindPopup("📍 You are here<br>Accuracy: " + acc + "m")
+        .openPopup();
 
     },
     (err) => {
-      alert("Location error: " + err.message);
+      alert(
+        "Location failed: " +
+        err.message +
+        "\nTry: enable precise location / move outside"
+      );
+      console.log(err);
     },
     {
       enableHighAccuracy: true,
-      timeout: 10000
+      timeout: 15000,
+      maximumAge: 0
     }
   );
 }
