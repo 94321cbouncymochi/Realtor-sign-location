@@ -62,10 +62,9 @@ function initMap() {
     attribution: '&copy; OpenStreetMap'
   }).addTo(map);
 
-  // 🧪 HARD TEST MARKER (DO NOT REMOVE YET)
-  L.marker([47.4, -122.2]).addTo(map)
-    .bindPopup("TEST PIN")
-    .openPopup();
+  L.marker([47.4, -122.2]).addTo(map).bindPopup("TEST PIN");
+
+  loadMarkers(); // 🔥 THIS MUST EXIST
 }
 
 /* =========================
