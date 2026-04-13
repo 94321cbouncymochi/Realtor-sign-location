@@ -82,24 +82,50 @@ function load() {
     .then(r => r.json())
     .then(data => {
 
+      console.log("DATA RECEIVED:", data);
+
+      // clear old markers safely
       markers.forEach(m => map.removeLayer(m));
       markers = [];
 
-      data.forEach(p => {
-        const m = L.marker([p.lat, p.lng]).addTo(map);
+      if (!Array.isArray(data)) {
+        console.error("NOT ARRAY:", data);
+        return;
+      }
 
-        m.bindPopup(`
-          <b>Saved Location</b><br>
-          <a target="_blank"
-             href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}">
-             Directions
-          </a>
-        `);
+      let points = [];
 
-        markers.push(m);
+      data.forEach((p, i) => {
+
+        console.log("RAW POINT:", p);
+
+        const lat = parseFloat(p.lat);
+        const lng = parseFloat(p.lng);
+
+        console.log("PARSED:", lat, lng);
+
+        if (isNaN(lat) || isNaN(lng)) {
+          console.warn("SKIPPED BAD POINT:", p);
+          return;
+        }
+
+        const marker = L.marker([lat, lng]).addTo(map);
+
+        marker.bindPopup("Saved Location");
+
+        markers.push(marker);
+        points.push([lat, lng]);
       });
 
-    });
+      console.log("TOTAL MARKERS:", markers.length);
+
+      // 🔥 FORCE VIEW TO MARKERS (CRITICAL)
+      if (points.length > 0) {
+        map.fitBounds(points, { padding: [50, 50] });
+      }
+
+    })
+    .catch(err => console.error("FETCH ERROR:", err));
 }
 
 init();
