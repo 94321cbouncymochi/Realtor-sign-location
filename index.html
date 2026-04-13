@@ -9,7 +9,10 @@
 
   <style>
     body { margin: 0; font-family: Arial; }
-    #bar { padding: 10px; background: #111827; }
+    #bar {
+      padding: 10px;
+      background: #111827;
+    }
     button {
       padding: 10px;
       margin-right: 8px;
@@ -17,8 +20,8 @@
       border-radius: 8px;
       background: #22c55e;
       color: white;
-      cursor: pointer;
       font-weight: bold;
+      cursor: pointer;
     }
     #map { height: calc(100vh - 50px); }
   </style>
@@ -35,12 +38,12 @@
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyH72cVKuncJmAxC5xTWN8EHoS1_31a9RUqRcKpy0bhGFhKYId_6DWJaBplXTDgGGGw/exec";
+const API_URL = "YOUR_APPS_SCRIPT_EXEC_URL_HERE";
 
 let map;
 let markers = [];
 
-/* ================= MAP ================= */
+/* ================= INIT ================= */
 function init() {
   map = L.map('map').setView([47.4, -122.2], 12);
 
@@ -58,17 +61,18 @@ function go() {
   });
 }
 
-/* ================= SAVE ================= */
+/* ================= SAVE (CORS SAFE) ================= */
 function save() {
   navigator.geolocation.getCurrentPosition(pos => {
+
     fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         lat: pos.coords.latitude,
         lng: pos.coords.longitude
       })
     }).then(() => load());
+
   });
 }
 
@@ -89,17 +93,17 @@ function load() {
         const marker = L.marker([lat, lng]).addTo(map);
 
         marker.bindPopup(`
-          <b>📍 Saved Location</b><br><br>
+          <b>📍 Location</b><br><br>
 
           <button onclick="openGPS(${lat},${lng})"
-            style="padding:6px;margin:4px;background:#22c55e;color:white;border:none;border-radius:6px;cursor:pointer;">
+            style="padding:6px;margin:4px;background:#22c55e;color:white;border:none;border-radius:6px;">
             🧭 Open GPS
           </button>
 
           <br>
 
           <button onclick="deleteMarker(${lat},${lng})"
-            style="padding:6px;margin:4px;background:#ef4444;color:white;border:none;border-radius:6px;cursor:pointer;">
+            style="padding:6px;margin:4px;background:#ef4444;color:white;border:none;border-radius:6px;">
             🗑️ Delete
           </button>
         `);
@@ -122,7 +126,6 @@ function openGPS(lat, lng) {
 function deleteMarker(lat, lng) {
   fetch(API_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       action: "delete",
       lat,
