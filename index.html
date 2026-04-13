@@ -107,23 +107,27 @@ function goToMyLocation() {
 ========================= */
 function saveMyLocation() {
   navigator.geolocation.getCurrentPosition(
-    async (pos) => {
+    (pos) => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
 
-      await fetch(API_URL, {
+      fetch(API_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "text/plain"
-        },
         body: JSON.stringify({ lat, lng })
+      })
+      .then(res => res.text())
+      .then(txt => {
+        console.log("SAVE RESPONSE:", txt);
+        alert("Saved!");
+        loadMarkers();
+      })
+      .catch(err => {
+        console.error("SAVE ERROR:", err);
+        alert("Save failed (check console)");
       });
-
-      alert("Saved!");
-      loadMarkers();
     },
     (err) => {
-      alert("Save failed: " + err.message);
+      alert("GPS blocked: " + err.message);
     }
   );
 }
