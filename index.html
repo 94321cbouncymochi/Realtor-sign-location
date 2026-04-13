@@ -7,10 +7,7 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-    }
+    body { margin: 0; font-family: Arial; }
 
     #topbar {
       display: flex;
@@ -38,8 +35,8 @@
 <body>
 
 <div id="topbar">
-  <button onclick="goToMyLocation()">📍 Go to My Location</button>
-  <button onclick="saveMyLocation()">💾 Save My Location</button>
+  <button onclick="goToMyLocation()">📍 My Location</button>
+  <button onclick="saveMyLocation()">💾 Save Location</button>
 </div>
 
 <div id="map"></div>
@@ -51,7 +48,6 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyH72cVKuncJmAxC5xTWN8E
 let map;
 let markers = [];
 let userMarker = null;
-let gpsLock = false;
 
 /* =========================
    🗺️ INIT MAP
@@ -69,60 +65,31 @@ function initMap() {
 }
 
 /* =========================
-   📍 GO TO LOCATION (FIXED)
+   📍 GPS LOCATION
 ========================= */
 function goToMyLocation() {
-  if (gpsLock) return;
-  gpsLock = true;
-
-  if (!navigator.geolocation) {
-    alert("Geolocation not supported");
-    gpsLock = false;
-    return;
-  }
-
   navigator.geolocation.getCurrentPosition(
     (pos) => {
-      gpsLock = false;
-
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
 
-      console.log("GPS:", lat, lng);
-
-      if (!map) {
-        alert("Map not loaded yet");
-        return;
-      }
-
       map.setView([lat, lng], 17);
 
-      if (userMarker) {
-        map.removeLayer(userMarker);
-      }
+      if (userMarker) map.removeLayer(userMarker);
 
       userMarker = L.marker([lat, lng])
         .addTo(map)
         .bindPopup("📍 You are here")
         .openPopup();
     },
-
     (err) => {
-      gpsLock = false;
       alert("GPS error: " + err.message);
-      console.log(err);
-    },
-
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0
     }
   );
 }
 
 /* =========================
-   💾 SAVE LOCATION (FIXED)
+   💾 SAVE LOCATION
 ========================= */
 function saveMyLocation() {
   navigator.geolocation.getCurrentPosition(
@@ -134,20 +101,12 @@ function saveMyLocation() {
         method: "POST",
         body: JSON.stringify({ lat, lng })
       })
-      .then(res => res.text())
-      .then(txt => {
-        console.log("SAVE:", txt);
+      .then(() => {
         alert("Saved!");
         loadMarkers();
-      })
-      .catch(err => {
-        console.log(err);
-        alert("Save failed");
       });
     },
-    (err) => {
-      alert("GPS error: " + err.message);
-    }
+    (err) => alert(err.message)
   );
 }
 
@@ -170,20 +129,23 @@ function loadMarkers() {
 
         marker.bindPopup(`
           <b>Saved Location</b><br><br>
-          <button onclick="openMaps(${lat},${lng})">🧭 Navigate</button>
+
+          <button onclick="openDirections(${lat}, ${lng})">
+            🧭 Get Directions
+          </button>
         `);
 
         markers.push(marker);
       });
-    })
-    .catch(err => console.log("LOAD ERROR:", err));
+    });
 }
 
 /* =========================
-   🧭 NAVIGATE
+   🧭 REAL DIRECTIONS MODE
 ========================= */
-function openMaps(lat, lng) {
-  window.open(`https://www.google.com/maps?q=${lat},${lng}`);
+function openDirections(lat, lng) {
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  window.open(url, "_blank");
 }
 
 /* =========================
