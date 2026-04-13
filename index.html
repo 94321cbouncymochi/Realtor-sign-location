@@ -51,6 +51,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyH72cVKuncJmAxC5xTWN8E
 let map;
 let markers = [];
 let userMarker = null;
+let gpsLock = false;
 
 /* =========================
    🗺️ INIT MAP
@@ -64,32 +65,64 @@ function initMap() {
 
   loadMarkers();
 
-  setTimeout(() => {
-    map.invalidateSize();
-  }, 500);
+  setTimeout(() => map.invalidateSize(), 300);
 }
 
 /* =========================
-   📍 GO TO MY LOCATION
+   📍 GO TO LOCATION (FIXED)
 ========================= */
 function goToMyLocation() {
+  if (gpsLock) return;
+  gpsLock = true;
+
+  if (!navigator.geolocation) {
+    alert("Geolocation not supported");
+    gpsLock = false;
+    return;
+  }
+
   navigator.geolocation.getCurrentPosition(
     (pos) => {
-      alert(
-        "LAT: " + pos.coords.latitude +
-        "\nLNG: " + pos.coords.longitude +
-        "\nACCURACY: " + pos.coords.accuracy
-      );
+      gpsLock = false;
+
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      console.log("GPS:", lat, lng);
+
+      if (!map) {
+        alert("Map not loaded yet");
+        return;
+      }
+
+      map.setView([lat, lng], 17);
+
+      if (userMarker) {
+        map.removeLayer(userMarker);
+      }
+
+      userMarker = L.marker([lat, lng])
+        .addTo(map)
+        .bindPopup("📍 You are here")
+        .openPopup();
     },
+
     (err) => {
-      alert("ERROR: " + err.message);
+      gpsLock = false;
+      alert("GPS error: " + err.message);
+      console.log(err);
     },
-    { enableHighAccuracy: true }
+
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    }
   );
 }
 
 /* =========================
-   💾 SAVE LOCATION
+   💾 SAVE LOCATION (FIXED)
 ========================= */
 function saveMyLocation() {
   navigator.geolocation.getCurrentPosition(
@@ -103,17 +136,17 @@ function saveMyLocation() {
       })
       .then(res => res.text())
       .then(txt => {
-        console.log("SAVE RESPONSE:", txt);
+        console.log("SAVE:", txt);
         alert("Saved!");
         loadMarkers();
       })
       .catch(err => {
-        console.error("SAVE ERROR:", err);
-        alert("Save failed (check console)");
+        console.log(err);
+        alert("Save failed");
       });
     },
     (err) => {
-      alert("GPS blocked: " + err.message);
+      alert("GPS error: " + err.message);
     }
   );
 }
@@ -143,11 +176,11 @@ function loadMarkers() {
         markers.push(marker);
       });
     })
-    .catch(err => console.log("Load error:", err));
+    .catch(err => console.log("LOAD ERROR:", err));
 }
 
 /* =========================
-   🧭 OPEN GOOGLE MAPS
+   🧭 NAVIGATE
 ========================= */
 function openMaps(lat, lng) {
   window.open(`https://www.google.com/maps?q=${lat},${lng}`);
