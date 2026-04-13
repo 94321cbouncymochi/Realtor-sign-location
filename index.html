@@ -101,7 +101,7 @@ function saveMyLocation() {
       fetch(API_URL, {
         method: "POST",
         headers: {
-          "Content-Type": "text/plain"
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ lat, lng })
       })
@@ -109,21 +109,19 @@ function saveMyLocation() {
       .then(txt => {
         console.log("SAVE RESPONSE:", txt);
 
-        if (txt.includes("ERROR")) {
-          alert("Save failed (Apps Script error)");
+        if (!txt.includes("OK")) {
+          alert("Save failed: " + txt);
         } else {
           alert("Saved!");
           loadMarkers();
         }
       })
       .catch(err => {
-        console.error(err);
-        alert("Save failed (network issue)");
+        console.error("NETWORK ERROR:", err);
+        alert("Save failed (network blocked)");
       });
     },
-    (err) => {
-      alert("GPS error: " + err.message);
-    }
+    (err) => alert("GPS error: " + err.message)
   );
 }
 
