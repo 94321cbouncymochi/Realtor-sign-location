@@ -56,13 +56,19 @@ let userMarker = null;
    🗺️ INIT MAP
 ========================= */
 function initMap() {
-  map = L.map('map').setView([47.4, -122.2], 12);
+  map = L.map('map');
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap'
   }).addTo(map);
 
-  setTimeout(loadMarkers, 500);
+  map.setView([47.4, -122.2], 12);
+
+  // 🔥 WAIT FOR MAP TO FULLY ATTACH
+  setTimeout(() => {
+    map.invalidateSize();
+    loadMarkers();
+  }, 1000);
 }
 
 /* =========================
