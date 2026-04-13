@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Realtor Map Tracker</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <style>
+    body { margin: 0; font-family: Arial; }
+    #map { height: 100vh; }
+    .btn {
+      padding: 6px 10px;
+      border: none;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<script>
+const API_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE";
+
+let map;
+let markers = [];
+
+// 🌍 INIT MAP
+function initMap() {
+  map = L.map('map').setView([47.4, -122.2], 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  // 🖱️ Click to add pin
+  map.on('click', async (e) => {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+
+    if (confirm("Save this location?")) {
+      await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ lat, lng })
+      });
+
+      loadMarkers();
+    }
+  });
+
+  loadMarkers();
+
+  setTimeout(() => map.invalidateSize(), 500);
+}
+
+// 📦 LOAD MARKERS
+function loadMarkers() {
+  fetch(API_URL)
+    .then(res => res.json())
+    .then(data => {
+
+      // clear old markers
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+
+      data.forEach((row) => {
+        const lat = row[1];
+        const lng = row[2];
+
+        const marker = L.marker([lat, lng]).addTo(map);
+
+        marker.bindPopup(`
+          <b>Saved Location</b><br>
+          <button class="btn" onclick="openMaps(${lat},${lng})">Navigate</button>
+        `);
+
+        markers.push(marker);
+      });
+    });
+}
+
+// 🧭 OPEN GOOGLE MAPS
+function openMaps(lat, lng) {
+  window.open(`https://www.google.com/maps?q=${lat},${lng}`);
+}
+
+window.onload = initMap;
+</script>
+
+</body>
+</html>
