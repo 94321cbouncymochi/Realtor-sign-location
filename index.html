@@ -38,7 +38,7 @@
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyH72cVKuncJmAxC5xTWN8EHoS1_31a9RUqRcKpy0bhGFhKYId_6DWJaBplXTDgGGGw/exec";
+const API_URL = "PASTE_YOUR_EXEC_URL_HERE";
 
 let map;
 let markers = [];
@@ -61,7 +61,7 @@ function go() {
   });
 }
 
-/* ================= SAVE (CORS SAFE) ================= */
+/* ================= SAVE ================= */
 function save() {
   navigator.geolocation.getCurrentPosition(pos => {
 
@@ -92,29 +92,27 @@ function load() {
 
         const marker = L.marker([lat, lng]).addTo(map);
 
+        markers.push(marker);
+
         marker.bindPopup(`
           <b>📍 Location</b><br><br>
 
-          <button onclick="openGPS(${lat},${lng})"
-            style="padding:6px;margin:4px;background:#22c55e;color:white;border:none;border-radius:6px;">
+          <button onclick="openGPS(${lat},${lng})">
             🧭 Open GPS
           </button>
 
           <br>
 
-          <button onclick="deleteMarker(${lat},${lng})"
-            style="padding:6px;margin:4px;background:#ef4444;color:white;border:none;border-radius:6px;">
+          <button onclick="deleteByCoords(${lat},${lng})">
             🗑️ Delete
           </button>
         `);
-
-        markers.push(marker);
       });
 
     });
 }
 
-/* ================= GPS OPEN ================= */
+/* ================= OPEN GPS ================= */
 function openGPS(lat, lng) {
   window.open(
     `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
@@ -122,8 +120,19 @@ function openGPS(lat, lng) {
   );
 }
 
-/* ================= DELETE ================= */
-function deleteMarker(lat, lng) {
+/* ================= DELETE (INSTANT UI + SYNC) ================= */
+function deleteByCoords(lat, lng) {
+
+  const marker = markers.find(m =>
+    m.getLatLng().lat === lat &&
+    m.getLatLng().lng === lng
+  );
+
+  if (marker) {
+    map.removeLayer(marker);
+    markers = markers.filter(m => m !== marker);
+  }
+
   fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
