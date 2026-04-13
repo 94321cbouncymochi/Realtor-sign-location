@@ -129,53 +129,20 @@ function saveMyLocation() {
    📦 LOAD MARKERS (FIXED)
 ========================= */
 function loadMarkers() {
-  console.log("🔥 loadMarkers CALLED");
+  console.log("🔥 LOAD MARKERS START");
 
   fetch(API_URL)
     .then(res => res.json())
     .then(data => {
 
-      console.log("📦 RAW RESPONSE:", data);
-      console.log("📦 TYPE:", typeof data);
-      console.log("📦 IS ARRAY:", Array.isArray(data));
-      console.log("📦 LENGTH:", data?.length);
+      console.log("📦 RAW API RESPONSE:", data);
 
-      markers.forEach(m => map.removeLayer(m));
-      markers = [];
+      alert("Markers received: " + data.length);
 
-      if (!data || data.length === 0) {
-        console.warn("⚠️ NO DATA FROM SHEET");
-        return;
-      }
-
-      data.forEach((item, i) => {
-
-        console.log("➡️ ITEM:", item);
-
-        const lat = Number(item.lat);
-        const lng = Number(item.lng);
-
-        if (isNaN(lat) || isNaN(lng)) {
-          console.warn("❌ BAD ITEM:", item);
-          return;
-        }
-
-        const marker = L.marker([lat, lng]).addTo(map);
-
-        marker.bindPopup(`
-          <b>Saved Location</b><br>
-          <button onclick="openDirections(${lat}, ${lng})">
-            🧭 Get Directions
-          </button>
-        `);
-
-        markers.push(marker);
-      });
-
-      console.log("✅ FINAL MARKER COUNT:", markers.length);
     })
     .catch(err => {
       console.error("💥 FETCH FAILED:", err);
+      alert("Fetch failed");
     });
 }
 
