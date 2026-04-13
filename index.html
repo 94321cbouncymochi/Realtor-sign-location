@@ -121,15 +121,17 @@ function loadMarkers() {
       markers.forEach(m => map.removeLayer(m));
       markers = [];
 
-      data.forEach((row) => {
-        const lat = row[1];
-        const lng = row[2];
+      data.forEach((item) => {
+
+        const lat = Number(item.lat);
+        const lng = Number(item.lng);
+
+        if (!lat || !lng) return;
 
         const marker = L.marker([lat, lng]).addTo(map);
 
         marker.bindPopup(`
           <b>Saved Location</b><br><br>
-
           <button onclick="openDirections(${lat}, ${lng})">
             🧭 Get Directions
           </button>
@@ -137,7 +139,8 @@ function loadMarkers() {
 
         markers.push(marker);
       });
-    });
+    })
+    .catch(err => console.log("LOAD ERROR:", err));
 }
 
 /* =========================
