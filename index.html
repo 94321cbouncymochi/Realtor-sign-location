@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Realtor Location Tracker</title>
+  <title>Realtor Map Tracker</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -10,15 +10,13 @@
     body {
       margin: 0;
       font-family: Arial;
-      background: #0f172a;
-      color: white;
     }
 
     #topbar {
-      padding: 10px;
-      background: #1e293b;
       display: flex;
       gap: 10px;
+      padding: 10px;
+      background: #1e293b;
     }
 
     button {
@@ -47,12 +45,16 @@
 <div id="map"></div>
 
 <script>
+
 const API_URL = "https://script.google.com/macros/s/AKfycbyH72cVKuncJmAxC5xTWN8EHoS1_31a9RUqRcKpy0bhGFhKYId_6DWJaBplXTDgGGGw/exec";
 
 let map;
-let userMarker = null;
 let markers = [];
+let userMarker = null;
 
+/* =========================
+   🗺️ INIT MAP
+========================= */
 function initMap() {
   map = L.map('map').setView([47.4, -122.2], 12);
 
@@ -62,16 +64,14 @@ function initMap() {
 
   loadMarkers();
 
-  // auto-try location on load
-  goToMyLocation();
-
-  setTimeout(() => map.invalidateSize(), 500);
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 500);
 }
 
 /* =========================
-   📍 GET USER LOCATION
+   📍 GO TO MY LOCATION
 ========================= */
-
 function goToMyLocation() {
   if (!navigator.geolocation) {
     alert("Geolocation not supported");
@@ -79,13 +79,12 @@ function goToMyLocation() {
   }
 
   navigator.geolocation.getCurrentPosition(
-    pos => {
+    (pos) => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
 
-      map.setView([lat, lng], 16);
+      map.setView([lat, lng], 17);
 
-      // blue dot marker
       if (userMarker) map.removeLayer(userMarker);
 
       userMarker = L.circleMarker([lat, lng], {
@@ -93,8 +92,12 @@ function goToMyLocation() {
       }).addTo(map);
 
     },
-    err => {
-      alert("Location blocked: " + err.message);
+    (err) => {
+      alert("Location error: " + err.message);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000
     }
   );
 }
@@ -102,23 +105,25 @@ function goToMyLocation() {
 /* =========================
    💾 SAVE LOCATION
 ========================= */
-
 function saveMyLocation() {
   navigator.geolocation.getCurrentPosition(
-    async pos => {
+    async (pos) => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
 
       await fetch(API_URL, {
         method: "POST",
+        headers: {
+          "Content-Type": "text/plain"
+        },
         body: JSON.stringify({ lat, lng })
       });
 
-      alert("Saved location!");
+      alert("Saved!");
       loadMarkers();
     },
-    err => {
-      alert("Cannot save location: " + err.message);
+    (err) => {
+      alert("Save failed: " + err.message);
     }
   );
 }
@@ -126,7 +131,6 @@ function saveMyLocation() {
 /* =========================
    📦 LOAD MARKERS
 ========================= */
-
 function loadMarkers() {
   fetch(API_URL)
     .then(res => res.json())
@@ -142,19 +146,19 @@ function loadMarkers() {
         const marker = L.marker([lat, lng]).addTo(map);
 
         marker.bindPopup(`
-          <b>Saved Spot</b><br><br>
+          <b>Saved Location</b><br><br>
           <button onclick="openMaps(${lat},${lng})">🧭 Navigate</button>
         `);
 
         markers.push(marker);
       });
-    });
+    })
+    .catch(err => console.log("Load error:", err));
 }
 
 /* =========================
-   🧭 NAVIGATION
+   🧭 OPEN GOOGLE MAPS
 ========================= */
-
 function openMaps(lat, lng) {
   window.open(`https://www.google.com/maps?q=${lat},${lng}`);
 }
@@ -162,7 +166,6 @@ function openMaps(lat, lng) {
 /* =========================
    🚀 START
 ========================= */
-
 window.onload = initMap;
 
 </script>
